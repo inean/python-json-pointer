@@ -14,6 +14,7 @@ class SpecificationTests(unittest.TestCase):
     def test_example(self):
         doc =   {
             "foo": ["bar", "baz"],
+            "complex": [ {"idi":9, "ids": "9"}, {"idi":10, "ids": "10"} ],
             "": 0,
             "a/b": 1,
             "c%d": 2,
@@ -22,12 +23,18 @@ class SpecificationTests(unittest.TestCase):
             "i\\j": 5,
             "k\"l": 6,
             " ": 7,
-            "m~n": 8
+            "m~n": 8,
+            "m[n": 9,
+            "m]n":10,
         }
 
         self.assertEqual(resolve_pointer(doc, ""), doc)
         self.assertEqual(resolve_pointer(doc, "/foo"), ["bar", "baz"])
         self.assertEqual(resolve_pointer(doc, "/foo/0"), "bar")
+        self.assertEqual(resolve_pointer(doc, "/complex"), [ {"idi":9, "ids": "9"}, {"idi":10, "ids": "10"} ])
+        self.assertEqual(resolve_pointer(doc, "/complex/1"), {"idi":10, "ids": "10"})
+        self.assertEqual(resolve_pointer(doc, "/complex/[@idi=10]"), {"idi":10, "ids": "10"})
+        self.assertEqual(resolve_pointer(doc, "/complex/[@idi=10,@ids='10']"), {"idi":10, "ids": "10"})
         self.assertEqual(resolve_pointer(doc, "/"), 0)
         self.assertEqual(resolve_pointer(doc, "/a~1b"), 1)
         self.assertEqual(resolve_pointer(doc, "/c%d"), 2)
@@ -37,6 +44,8 @@ class SpecificationTests(unittest.TestCase):
         self.assertEqual(resolve_pointer(doc, "/k\"l"), 6)
         self.assertEqual(resolve_pointer(doc, "/ "), 7)
         self.assertEqual(resolve_pointer(doc, "/m~0n"), 8)
+        self.assertEqual(resolve_pointer(doc, "/m~2n"), 9)
+        self.assertEqual(resolve_pointer(doc, "/m~3n"), 10)
 
 
     def test_eol(self):
