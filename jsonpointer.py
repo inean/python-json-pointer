@@ -137,6 +137,8 @@ class JsonPointer(object):
             raise JsonPointerException('location must starts with /')
 
         parts = map(unquote, parts)
+        parts = [part.replace('~3', ']') for part in parts]
+        parts = [part.replace('~2', '[') for part in parts]
         parts = [part.replace('~1', '/') for part in parts]
         parts = [part.replace('~0', '~') for part in parts]
         self.parts = parts
