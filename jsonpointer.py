@@ -203,7 +203,7 @@ class JsonPointer(object):
             if part == '-':
                 return part
 
-            if part[0] == '[' and part[-1] == ']':
+            if part and isinstance(part, basestring) and part[0] + part[-1] == '[]':
                 try:
                     # create a filter generator
                     pfilter, rfilter = [], self.RE.sub("", part)[1:-1].split(",")
