@@ -131,6 +131,8 @@ def set_pointer(doc, pointer, value, inplace=True):
 class JsonPointer(object):
     """ A JSON Pointer that can reference parts of an JSON document """
 
+    RE = re.compile(' |@')
+    
     def __init__(self, pointer):
         parts = pointer.split('/')
         if parts.pop(0) != '':
@@ -200,6 +202,30 @@ class JsonPointer(object):
 
             if part == '-':
                 return part
+
+            if part[0] == '[' and part[-1] == ']':
+                try:
+                    # create a filter generator
+                    pfilter, rfilter = [], self.RE.sub("", part)[1:-1].split(",")
+                    for key, value in ((item.split("=")) for item in rfilter):
+                        try:
+                            # try to parse integers
+                            value = int(value)
+                        except ValueError:
+                            # fallback to a string
+                            value = value.strip(' \'"')
+                        finally:
+                            pfilter.append((key, value,))
+                except Exception, err:
+                    raise JsonPointerException("'%s' is not a valid list filter" % (part, ))
+                    
+                # lookup for a valid entry inside list
+                for index, value in enumerate(doc):
+                    if isinstance(value, dict):
+                        if set(pfilter).issubset(set(value.iteritems())):
+                            return index
+                # not found, raise exception
+                raise JsonPointerException("member '%s' not found in %s" % (part, doc))
 
             if not RE_ARRAY_INDEX.match(str(part)):
                 raise JsonPointerException("'%s' is not a valid list index" % (part, ))

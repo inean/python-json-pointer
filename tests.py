@@ -57,6 +57,20 @@ class SpecificationTests(unittest.TestCase):
         self.assertRaises(JsonPointerException, resolve_pointer, doc, "/foo/-/1")
 
 
+    def test_filter(self):
+        doc = {
+            "complex": [ {"idi":9, "ids": "9"}, {"idi":10, "ids": "10"} ],
+        }
+        
+        self.assertEqual(resolve_pointer(doc, "/complex"), [ {"idi":9, "ids": "9"}, {"idi":10, "ids": "10"} ])
+        self.assertEqual(resolve_pointer(doc, "/complex/1"), {"idi":10, "ids": "10"})
+        self.assertEqual(resolve_pointer(doc, "/complex/[@idi=10]"), {"idi":10, "ids": "10"})
+        self.assertEqual(resolve_pointer(doc, "/complex/[@idi=10,@ids='10']"), {"idi":10, "ids": "10"})
+        # malformed filter
+        self.assertRaises(JsonPointerException, resolve_pointer, doc, "/complex/@idi=10,@ids='10'")
+        # not found
+        self.assertRaises(JsonPointerException, resolve_pointer, doc, "]/complex/[@idi=10,@ids='20']")
+
 class ComparisonTests(unittest.TestCase):
 
     def test_eq_hash(self):
