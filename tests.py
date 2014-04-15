@@ -35,6 +35,7 @@ class SpecificationTests(unittest.TestCase):
         self.assertEqual(resolve_pointer(doc, "/complex/1"), {"idi":10, "ids": "10"})
         self.assertEqual(resolve_pointer(doc, "/complex/[@idi=10]"), {"idi":10, "ids": "10"})
         self.assertEqual(resolve_pointer(doc, "/complex/[@idi=10,@ids='10']"), {"idi":10, "ids": "10"})
+        self.assertEqual(resolve_pointer(doc, "/complex/[@idi=9|10]"), {"idi":9, "ids": "9"})
         self.assertEqual(resolve_pointer(doc, "/"), 0)
         self.assertEqual(resolve_pointer(doc, "/a~1b"), 1)
         self.assertEqual(resolve_pointer(doc, "/c%d"), 2)

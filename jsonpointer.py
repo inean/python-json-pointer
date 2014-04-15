@@ -48,7 +48,7 @@ except ImportError: # Python 3
     from urllib.parse import unquote
     izip = zip
 
-from itertools import tee
+from itertools import tee, product
 import re
 import copy
 
@@ -197,6 +197,10 @@ class JsonPointer(object):
         """ Returns the next step in the correct type """
 
         if isinstance(doc, dict):
+            if '|' in part:
+                for candidate in part.split('|'):
+                    if candidate in doc:
+                        return candidate
             return part
 
         elif isinstance(doc, list):
@@ -207,24 +211,37 @@ class JsonPointer(object):
             if part and isinstance(part, basestring) and part[0] + part[-1] == '[]':
                 try:
                     # create a filter generator
-                    pfilter, rfilter = [], self.RE.sub("", part)[1:-1].split(",")
+                    pfilters, rfilter = [], self.RE.sub("", part)[1:-1].split(",")
                     for key, value in ((item.split("=")) for item in rfilter):
-                        try:
-                            # try to parse integers
-                            value = int(value)
-                        except ValueError:
-                            # fallback to a string
-                            value = value.strip(' \'"')
-                        finally:
-                            pfilter.append((key, value,))
-                except Exception, err:
+                        values = value.split('|')
+                        for index, val in enumerate(values):
+                            try:
+                                # try to parse integers
+                                val = int(val)
+                            except ValueError:
+                                # fallback to a string
+                                val = val.strip(' \'"')
+                            finally:
+                                values[index] = val
+                        # common stiff
+                        ofilters = [(key, v,) for v in values]
+                        # initial case
+                        if len(pfilters) == 0:
+                            pfilters = [[pfilter] for pfilter in ofilters]
+                        else:
+                            # combine ofilter with pfilter
+                            retval = []
+                            for item in product(pfilters, ofilters):
+                                retval.append(item[0] + [item[1]])
+                            pfilters = retval
+                except Exception:
                     raise JsonPointerException("'%s' is not a valid list filter" % (part, ))
-
                 # lookup for a valid entry inside list
                 for index, value in enumerate(doc):
                     if isinstance(value, dict):
-                        if set(pfilter).issubset(set(value.iteritems())):
-                            return index
+                        for pfilter in pfilters:
+                            if set(pfilter).issubset(set(value.iteritems())):
+                                return index
                 # not found, raise exception
                 raise JsonPointerException("member '%s' not found in %s" % (part, doc))
 
