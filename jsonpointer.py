@@ -132,13 +132,14 @@ class JsonPointer(object):
     """ A JSON Pointer that can reference parts of an JSON document """
 
     RE = re.compile(' |@')
-    
+
     def __init__(self, pointer):
         parts = pointer.split('/')
         if parts.pop(0) != '':
             raise JsonPointerException('location must starts with /')
 
         parts = map(unquote, parts)
+        parts = [part.replace('~4', '|') for part in parts]
         parts = [part.replace('~3', ']') for part in parts]
         parts = [part.replace('~2', '[') for part in parts]
         parts = [part.replace('~1', '/') for part in parts]
@@ -218,7 +219,7 @@ class JsonPointer(object):
                             pfilter.append((key, value,))
                 except Exception, err:
                     raise JsonPointerException("'%s' is not a valid list filter" % (part, ))
-                    
+
                 # lookup for a valid entry inside list
                 for index, value in enumerate(doc):
                     if isinstance(value, dict):
